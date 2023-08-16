@@ -10,6 +10,10 @@ object KComp {
     lateinit var miniMessage: MiniMessage
         private set
 
+    init {
+        regenerateMiniMessage()
+    }
+
     private fun regenerateMiniMessage() {
         miniMessage = MiniMessage.builder()
             .editTags { it.resolvers(*resolvers.toTypedArray()) }
