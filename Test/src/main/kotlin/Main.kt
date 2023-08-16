@@ -1,5 +1,5 @@
 import net.kyori.adventure.text.Component
-import net.ultragrav.kcomp.KComp.toComp
+import net.ultragrav.kcomp.toComp
 
 fun main() {
     val comp = Component.text("test comp")

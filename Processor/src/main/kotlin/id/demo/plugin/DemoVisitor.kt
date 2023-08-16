@@ -20,7 +20,9 @@ import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.typeWithArguments
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.Variance
 
@@ -37,11 +39,15 @@ class DemoVisitor(private val context: IrPluginContext) : IrElementTransformerVo
     private val placeholderComponentFunction = placeholderClass.functionByName("component")
 
     private val kCompClass = context.referenceClass(ClassId.fromString(KComp::class.qualifiedName!!))!!
-    private val toCompStringFunction = kCompClass.functions.first {
+
+    private val toCompFunctions = context.referenceFunctions(
+        CallableId(FqName("net.ultragrav.kcomp"), Name.identifier("toComp"))
+    )
+    private val toCompStringFunction = toCompFunctions.first {
         it.owner.name == Name.identifier("toComp")
                 && it.owner.extensionReceiverParameter?.type == context.irBuiltIns.stringType
     }
-    private val toCompListFunction = kCompClass.functions.first {
+    private val toCompListFunction = toCompFunctions.first {
         it.owner.name == Name.identifier("toComp")
                 && it.owner.extensionReceiverParameter?.type?.classOrNull == context.irBuiltIns.collectionClass
     }

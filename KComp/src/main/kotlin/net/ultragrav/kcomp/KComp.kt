@@ -7,7 +7,8 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 object KComp {
     private var resolvers = mutableListOf<TagResolver>()
 
-    private lateinit var miniMessage: MiniMessage
+    lateinit var miniMessage: MiniMessage
+        private set
 
     private fun regenerateMiniMessage() {
         miniMessage = MiniMessage.builder()
@@ -19,7 +20,7 @@ object KComp {
         resolvers.add(resolver)
         regenerateMiniMessage()
     }
-
-    fun String.toComp(vararg replacer: TagResolver): Component = miniMessage.deserialize(this, *replacer)
-    fun Collection<String>.toComp(vararg replacer: TagResolver): List<Component> = this.map { it.toComp(*replacer) }
 }
+
+fun String.toComp(vararg replacer: TagResolver): Component = KComp.miniMessage.deserialize(this, *replacer)
+fun Collection<String>.toComp(vararg replacer: TagResolver): List<Component> = this.map { it.toComp(*replacer) }
