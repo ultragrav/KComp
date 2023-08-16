@@ -2,7 +2,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.8.20"
+    `maven-publish`
 }
+
+group = parent!!.group
+version = parent!!.version
 
 repositories {
     mavenCentral()
@@ -15,4 +19,12 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+publishing {
+    publications {
+        register("mavenJava", MavenPublication::class) {
+            from(components["java"])
+        }
+    }
 }

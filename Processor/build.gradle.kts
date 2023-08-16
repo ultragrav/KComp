@@ -2,7 +2,11 @@
 plugins {
     kotlin("jvm")
     kotlin("kapt")
+    `maven-publish`
 }
+
+group = parent!!.group
+version = parent!!.version
 
 repositories {
     mavenCentral()
@@ -17,4 +21,12 @@ dependencies {
     compileOnly("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.8.20")
     compileOnly("com.google.auto.service:auto-service-annotations:1.0.1")
     kapt("com.google.auto.service:auto-service:1.0.1")
+}
+
+publishing {
+    publications {
+        register("mavenJava", MavenPublication::class) {
+            from(components["java"])
+        }
+    }
 }
