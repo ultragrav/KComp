@@ -28,3 +28,9 @@ object KComp {
 
 fun String.toComp(vararg replacer: TagResolver): Component = KComp.miniMessage.deserialize(this, *replacer)
 fun Collection<String>.toComp(vararg replacer: TagResolver): List<Component> = this.map { it.toComp(*replacer) }
+
+fun Int.toComp() = Component.text(this)
+fun Double.toComp() = Component.text(this)
+fun Float.toComp() = Component.text(this)
+fun Long.toComp() = Component.text(this)
+fun Short.toComp() = Component.text(this.toString())
