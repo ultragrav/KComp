@@ -1,7 +1,7 @@
 @file:OptIn(ExperimentalCompilerApi::class)
 @file:Suppress("unused")
 
-package id.demo.plugin
+package net.ultragrav.kcomp.processor
 
 import com.google.auto.service.AutoService
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
@@ -12,13 +12,13 @@ import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 
 @AutoService(CompilerPluginRegistrar::class)
-class DemoCompilerPluginRegistrar : CompilerPluginRegistrar() {
+class KCompCompilerPluginRegistrar : CompilerPluginRegistrar() {
     override val supportsK2 = false
 
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
         val logger = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
 
-        DemoExtension.logger = logger
-        IrGenerationExtension.registerExtension(DemoExtension)
+        KCompExtension.logger = logger
+        IrGenerationExtension.registerExtension(KCompExtension)
     }
 }

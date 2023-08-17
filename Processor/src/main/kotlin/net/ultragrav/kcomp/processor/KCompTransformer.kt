@@ -1,4 +1,4 @@
-package id.demo.plugin
+package net.ultragrav.kcomp.processor
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.typeWithArguments
-import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -26,7 +25,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.Variance
 
-class DemoVisitor(private val context: IrPluginContext) : IrElementTransformerVoid() {
+class KCompTransformer(private val context: IrPluginContext) : IrElementTransformerVoid() {
     private val componentClass = context.referenceClass(ClassId.fromString(Component::class.qualifiedName!!))!!
     private val placeholderClass = context.referenceClass(ClassId.fromString(Placeholder::class.qualifiedName!!))!!
     private val tagResolverClass = context.referenceClass(ClassId.fromString(TagResolver::class.qualifiedName!!))!!
@@ -37,8 +36,6 @@ class DemoVisitor(private val context: IrPluginContext) : IrElementTransformerVo
         )
     )
     private val placeholderComponentFunction = placeholderClass.functionByName("component")
-
-    private val kCompClass = context.referenceClass(ClassId.fromString(KComp::class.qualifiedName!!))!!
 
     private val toCompFunctions = context.referenceFunctions(
         CallableId(FqName("net.ultragrav.kcomp"), Name.identifier("toComp"))
@@ -156,6 +153,6 @@ class DemoVisitor(private val context: IrPluginContext) : IrElementTransformerVo
     }
 
     private fun debug(str: String?) {
-        DemoExtension.logger.report(CompilerMessageSeverity.WARNING, str ?: "null")
+        KCompExtension.logger.report(CompilerMessageSeverity.WARNING, str ?: "null")
     }
 }

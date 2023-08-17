@@ -6,6 +6,9 @@ plugins {
     application
 }
 
+group = parent!!.group
+version = parent!!.version
+
 repositories {
     mavenCentral()
 }
