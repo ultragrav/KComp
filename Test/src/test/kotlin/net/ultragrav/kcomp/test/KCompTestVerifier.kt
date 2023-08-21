@@ -53,4 +53,15 @@ class KCompTestVerifier {
 
         assert(expected == actual) { "Expected $expected, got $actual" }
     }
+
+    @Test
+    fun testAnnotated() {
+        val expected = Pair(
+            KComp.miniMessage.deserialize("test <comp> test", Placeholder.component("comp", KCompTest.testComponent)),
+            KComp.miniMessage.deserialize("test <comp> test", Placeholder.component("comp", KCompTest.testComponent2))
+        )
+        val actual = KCompTest.annotated()
+
+        assert(expected == actual) { "Expected $expected, got $actual" }
+    }
 }

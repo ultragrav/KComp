@@ -26,7 +26,9 @@ object KComp {
     }
 }
 
+@ComponentPlaceholderInserting
 fun String.toComp(vararg replacer: TagResolver): Component = KComp.miniMessage.deserialize(this, *replacer)
+@ComponentPlaceholderInserting
 fun Collection<String>.toComp(vararg replacer: TagResolver): List<Component> = this.map { it.toComp(*replacer) }
 
 fun Int.toComp() = Component.text(this)

@@ -3,7 +3,7 @@ package net.ultragrav.kcomp.processor
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
-import net.ultragrav.kcomp.KComp
+import net.ultragrav.kcomp.ComponentPlaceholderInserting
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.typeWithArguments
+import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -49,27 +51,41 @@ class KCompTransformer(private val context: IrPluginContext) : IrElementTransfor
                 && it.owner.extensionReceiverParameter?.type?.classOrNull == context.irBuiltIns.collectionClass
     }
 
+    private val placeholderInsertingAnnotation =
+        context.referenceClass(ClassId.fromString(ComponentPlaceholderInserting::class.qualifiedName!!))!!
+
     override fun visitCall(expression: IrCall): IrExpression {
         super.visitCall(expression)
 
-        val extensionReceiver = expression.extensionReceiver ?: return expression
-
+        // Expression placeholders
         val mappedNames = mutableMapOf<String, IrExpression>()
 
-        if (expression.symbol == toCompStringFunction) {
-            expression.extensionReceiver = processExpressionString(extensionReceiver, mappedNames)
-        } else if (expression.symbol == toCompListFunction) {
-            expression.extensionReceiver = processExpressionCollection(expression.extensionReceiver, mappedNames)
+        // Only process functions with @ComponentPlaceholderInserting annotation
+        if (!expression.symbol.owner.hasAnnotation(placeholderInsertingAnnotation)) return expression
+
+        // Check if last parameter is a vararg of TagResolver
+        val lastParam = expression.symbol.owner.valueParameters[expression.symbol.owner.valueParameters.size - 1]
+        if (!lastParam.isVararg || lastParam.varargElementType != tagResolverType) {
+            throw IllegalStateException("Last parameter of @ComponentPlaceholderInserting function must be a vararg of TagResolver")
+        }
+
+        // Update extension receiver (if necessary)
+        expression.extensionReceiver = processExpression(expression.extensionReceiver, mappedNames)
+
+        // Update arguments except last one
+        for (i in 0 until expression.valueArgumentsCount - 1) {
+            expression.putValueArgument(i, processExpression(expression.getValueArgument(i), mappedNames))
         }
 
         // Nothing to remap
         if (mappedNames.isEmpty()) return expression
 
-        val placeholderVararg = expression.valueArguments[0] as? IrVararg ?: IrVarargImpl(
-            0, 0,
-            tagResolverArrayType,
-            tagResolverType
-        ).also { expression.putValueArgument(0, it) }
+        val placeholderVararg =
+            expression.valueArguments[expression.valueArgumentsCount - 1] as? IrVararg ?: IrVarargImpl(
+                0, 0,
+                tagResolverArrayType,
+                tagResolverType
+            ).also { expression.putValueArgument(expression.valueArgumentsCount - 1, it) }
 
         mappedNames.mapTo(placeholderVararg.elements) { (name, expr) ->
             val call = IrCallImpl.fromSymbolOwner(0, 0, placeholderComponentFunction)
@@ -82,22 +98,35 @@ class KCompTransformer(private val context: IrPluginContext) : IrElementTransfor
         return expression
     }
 
-    private fun processExpressionString(
+    private fun processExpression(
         expression: IrExpression?,
         mappedNames: MutableMap<String, IrExpression>
     ): IrExpression? {
         if (expression is IrStringConcatenation) {
-            processStringConcat(expression, mappedNames)
+            expression.arguments.replaceAll {
+                if (it.type.isSubtypeOfClass(componentClass)) {
+                    val name = generateLocalName(mappedNames, it)
+                    return@replaceAll "<$name>".toIrConst(context.irBuiltIns.stringType)
+                }
+                it
+            }
         } else if (expression is IrCall) {
             if (expression.symbol == context.irBuiltIns.memberStringPlus) {
-                expression.dispatchReceiver = processExpressionString(expression.dispatchReceiver, mappedNames)
-                expression.putValueArgument(0, processExpressionString(expression.getValueArgument(0), mappedNames))
+                expression.dispatchReceiver = processExpression(expression.dispatchReceiver, mappedNames)
+                expression.putValueArgument(0, processExpression(expression.getValueArgument(0), mappedNames))
             } else if (!expression.symbol.owner.name.isSpecial
                 && (expression.symbol.owner.name.identifier == "trimIndent"
                         || expression.symbol.owner.name.identifier == "replaceIndent")
                 && expression.extensionReceiver?.type == context.irBuiltIns.stringType
             ) {
-                expression.extensionReceiver = processExpressionString(expression.extensionReceiver, mappedNames)
+                expression.extensionReceiver = processExpression(expression.extensionReceiver, mappedNames)
+            } else if (!expression.symbol.owner.name.isSpecial
+                && expression.symbol.owner.name.identifier == "listOf"
+            ) {
+                val listElements = expression.valueArguments[0] as? IrVararg ?: return expression
+                listElements.elements.replaceAll {
+                    processExpression(it as IrExpression, mappedNames)!!
+                }
             }
         } else if (expression is IrGetValueImpl) {
             if (expression.type.isSubtypeOfClass(componentClass)) {
@@ -106,40 +135,10 @@ class KCompTransformer(private val context: IrPluginContext) : IrElementTransfor
             }
         } else if (expression is IrWhen) {
             expression.branches.forEach {
-                it.result = processExpressionString(it.result, mappedNames)!!
+                it.result = processExpression(it.result, mappedNames)!!
             }
         }
         return expression
-    }
-
-    private fun processExpressionCollection(
-        expression: IrExpression?,
-        mappedNames: MutableMap<String, IrExpression>
-    ): IrExpression? {
-        if (expression is IrCall) {
-            if (!expression.symbol.owner.name.isSpecial
-                && expression.symbol.owner.name.identifier == "listOf"
-            ) {
-                val listElements = expression.valueArguments[0] as? IrVararg ?: return expression
-                listElements.elements.replaceAll {
-                    processExpressionString(it as IrExpression, mappedNames)!!
-                }
-            }
-        }
-        return expression
-    }
-
-    private fun processStringConcat(
-        stringConcat: IrStringConcatenation,
-        mappedNames: MutableMap<String, IrExpression>
-    ) {
-        stringConcat.arguments.replaceAll {
-            if (it.type.isSubtypeOfClass(componentClass)) {
-                val name = generateLocalName(mappedNames, it)
-                return@replaceAll "<$name>".toIrConst(context.irBuiltIns.stringType)
-            }
-            it
-        }
     }
 
     private fun generateLocalName(

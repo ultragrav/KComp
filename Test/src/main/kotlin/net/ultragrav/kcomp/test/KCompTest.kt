@@ -1,6 +1,7 @@
 package net.ultragrav.kcomp.test
 
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder
 import net.ultragrav.kcomp.toComp
 
 object KCompTest {
@@ -28,5 +29,9 @@ object KCompTest {
             "test1 $testComponent test2",
             "test3 $testComponent test4"
         ).toComp()
+    }
+
+    fun annotated(): Pair<Component, Component> {
+        return testComp("test $testComponent test", "test $testComponent2 test")
     }
 }
