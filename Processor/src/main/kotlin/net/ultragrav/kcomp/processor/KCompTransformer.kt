@@ -8,14 +8,16 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.ir.backend.js.utils.valueArguments
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
+import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.interpreter.toIrConst
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
@@ -23,12 +25,8 @@ import org.jetbrains.kotlin.ir.types.typeWithArguments
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
-import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.Variance
 
 class KCompTransformer(private val context: IrPluginContext) :
@@ -43,16 +41,6 @@ class KCompTransformer(private val context: IrPluginContext) :
         )
     )
     private val placeholderComponentFunction = placeholderClass.functionByName("component")
-
-    private val toCompFunctions = context.referenceFunctions(
-        CallableId(FqName("net.ultragrav.kcomp"), Name.identifier("toComp"))
-    )
-    private val toCompStringFunction = toCompFunctions.first {
-        it.owner.name == Name.identifier("toComp") && it.owner.extensionReceiverParameter?.type == context.irBuiltIns.stringType
-    }
-    private val toCompListFunction = toCompFunctions.first {
-        it.owner.name == Name.identifier("toComp") && it.owner.extensionReceiverParameter?.type?.classOrNull == context.irBuiltIns.collectionClass
-    }
 
     private val placeholderInsertingAnnotation =
         context.referenceClass(ClassId.fromString(ComponentPlaceholderInserting::class.qualifiedName!!))!!
@@ -71,8 +59,6 @@ class KCompTransformer(private val context: IrPluginContext) :
         // Check if last parameter is a vararg of TagResolver
         val lastParam = expression.symbol.owner.valueParameters.last()
         if (!lastParam.isVararg || lastParam.varargElementType != tagResolverType) {
-            var remapLastArgument = false
-
             // Search for alternative method (in case we want string vararg)
             val types = expression.symbol.owner.valueParameters.mapIndexed { i, param ->
                 return@mapIndexed if (i == expression.valueArgumentsCount - 1 && param.isVararg) {
@@ -82,7 +68,6 @@ class KCompTransformer(private val context: IrPluginContext) :
                             makeTypeProjection(param.varargElementType!!, Variance.OUT_VARIANCE)
                         )
                     )
-                    remapLastArgument = true
                     arrayType
                 } else {
                     param.type
