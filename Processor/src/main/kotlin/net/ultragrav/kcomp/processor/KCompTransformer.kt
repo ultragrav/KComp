@@ -60,13 +60,6 @@ class KCompTransformer(private val context: IrPluginContext) :
     override fun visitCall(expression: IrCall): IrExpression {
         super.visitCall(expression)
 
-        if (!expression.symbol.owner.name.isSpecial && expression.symbol.owner.name.identifier == "testCompVararg"
-            && expression.valueArgumentsCount == 2) {
-            val list = expression.valueArguments[0] as IrGetValue
-//            IrGetValueImpl
-            debug(list.render())
-        }
-
         var newExpression = expression
 
         // Expression placeholders
