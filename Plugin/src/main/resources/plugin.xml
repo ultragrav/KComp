@@ -1,0 +1,10 @@
+<idea-plugin>
+    <id>net.ultragrav.kcomp</id>
+    <name>KComp</name>
+    <vendor>UltraGrav</vendor>
+
+    <!-- Register KCompInspection -->
+    <extensions defaultExtensionNs="com.intellij">
+        <inspectionToolProvider implementation="net.ultragrav.kcomp.KCompInspectionProvider"/>
+    </extensions>
+</idea-plugin>

@@ -22,9 +22,7 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.typeWithArguments
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.hasAnnotation
-import org.jetbrains.kotlin.ir.util.isVararg
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.types.Variance
@@ -84,7 +82,7 @@ class KCompTransformer(private val context: IrPluginContext) :
                                 && it.valueParameters.last().varargElementType == tagResolverType
                                 && it.returnType == expression.symbol.owner.returnType
                     }
-                    ?: throw IllegalStateException("Last parameter of @ComponentPlaceholderInserting function must be a vararg of TagResolver")
+                    ?: throw IllegalStateException("Last parameter of @ComponentPlaceholderInserting function must be a vararg of TagResolver, function: ${expression.symbol.owner.fqNameWhenAvailable}")
 
             newExpression = IrCallImpl.fromSymbolOwner(0, 0, alternative.symbol as IrSimpleFunctionSymbol)
 

@@ -3,5 +3,9 @@ plugins {
     `maven-publish`
 }
 
+repositories {
+    mavenCentral()
+}
+
 group = "net.ultragrav.kcomp"
-version = "1.0.1"
+version = "1.0.2"

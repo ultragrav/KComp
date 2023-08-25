@@ -28,8 +28,12 @@ object KComp {
 
 @ComponentPlaceholderInserting
 fun String.toComp(vararg replacer: TagResolver): Component = KComp.miniMessage.deserialize(this, *replacer)
+
 @ComponentPlaceholderInserting
 fun Collection<String>.toComp(vararg replacer: TagResolver): List<Component> = this.map { it.toComp(*replacer) }
+
+@ComponentPlaceholderInserting
+fun String.toCompList(vararg replacer: TagResolver): List<Component> = this.split("\n").toComp(*replacer)
 
 fun Int.toComp() = Component.text(this)
 fun Double.toComp() = Component.text(this)
