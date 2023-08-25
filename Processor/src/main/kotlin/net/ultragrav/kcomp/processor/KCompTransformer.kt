@@ -22,7 +22,10 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.typeWithArguments
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
+import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.types.Variance
@@ -42,6 +45,12 @@ class KCompTransformer(private val context: IrPluginContext) :
 
     private val placeholderInsertingAnnotation =
         context.referenceClass(ClassId.fromString(ComponentPlaceholderInserting::class.qualifiedName!!))!!
+
+    private val setConstructionFunctions = listOf(
+        "listOf", "setOf", "mutableListOf", "mutableSetOf", "arrayListOf",
+        "hashSetOf", "linkedSetOf", "sortedSetOf", "mutableListOf", "mutableSetOf", "mutableMapOf", "hashMapOf",
+        "linkedMapOf", "sortedMapOf", "mutableMapOf"
+    )
 
     override fun visitCall(expression: IrCall): IrExpression {
         super.visitCall(expression)
@@ -136,7 +145,7 @@ class KCompTransformer(private val context: IrPluginContext) :
                 expression.putValueArgument(0, processExpression(expression.getValueArgument(0), mappedNames))
             } else if (!expression.symbol.owner.name.isSpecial && (expression.symbol.owner.name.identifier == "trimIndent" || expression.symbol.owner.name.identifier == "replaceIndent") && expression.extensionReceiver?.type == context.irBuiltIns.stringType) {
                 expression.extensionReceiver = processExpression(expression.extensionReceiver, mappedNames)
-            } else if (!expression.symbol.owner.name.isSpecial && expression.symbol.owner.name.identifier == "listOf") {
+            } else if (!expression.symbol.owner.name.isSpecial && expression.symbol.owner.name.identifier in setConstructionFunctions) {
                 val listElements = expression.valueArguments[0] as? IrVararg ?: return expression
                 listElements.elements.replaceAll {
                     processExpression(it as IrExpression, mappedNames)!!
