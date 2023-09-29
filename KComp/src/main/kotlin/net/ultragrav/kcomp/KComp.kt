@@ -11,6 +11,7 @@ object KComp {
         private set
 
     init {
+        resolvers.add(ShorthandTagResolver)
         regenerateMiniMessage()
     }
 
@@ -20,7 +21,7 @@ object KComp {
             .build()
     }
 
-    fun addTagResolver(resolver: ShorthandTagResolver) {
+    fun addTagResolver(resolver: TagResolver) {
         resolvers.add(resolver)
         regenerateMiniMessage()
     }
