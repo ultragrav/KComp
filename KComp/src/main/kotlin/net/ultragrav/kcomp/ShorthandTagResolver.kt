@@ -38,10 +38,17 @@ object ShorthandTagResolver : TagResolver {
         if (!has(name)) return null
 
         // Get color and formats
-        val color = name[0].let { colors[it] } // null if not a color
+        val ch = name[0]
         val formats = name.filter { it in formats }.map { formats[it]!! }
 
         return Tag.styling {
+            if (ch == 'r') {
+                it.color(null)
+                TextDecoration.values().forEach { decoration ->
+                    it.decoration(decoration, false)
+                }
+            }
+            val color = colors[ch]
             if (color != null) {
                 it.color(color)
                 TextDecoration.values().forEach { decoration ->
@@ -58,6 +65,6 @@ object ShorthandTagResolver : TagResolver {
     override fun has(name: String): Boolean {
         if (name.isEmpty()) return false
 
-        return (name[0] in colors || name[0] in formats) && name.substring(1).all { it in formats }
+        return (name[0] == 'r' || name[0] in colors || name[0] in formats) && name.substring(1).all { it in formats }
     }
 }
