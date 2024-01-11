@@ -37,4 +37,10 @@ object KCompTest {
     fun annotatedAlternative(): Array<Component> {
         return testCompVararg("test $testComponent test", "test $testComponent2 test")
     }
+
+    fun withSpread(): Array<Component> {
+        val testArr = arrayOf("some string")
+
+        return testCompVararg(*testArr, "test $testComponent test", "test $testComponent2 test")
+    }
 }

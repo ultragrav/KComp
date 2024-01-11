@@ -7,6 +7,7 @@ import net.ultragrav.kcomp.ComponentPlaceholderInserting
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.jvm.functionByName
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.utils.valueArguments
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
@@ -162,10 +163,20 @@ class KCompTransformer(private val context: IrPluginContext) :
             }
         } else if (expression is IrVararg) {
             expression.elements.replaceAll {
-                processExpression(it as IrExpression, mappedNames)!!
+                processElement(it, mappedNames)!! as IrVarargElement
             }
         }
         return expression
+    }
+
+    private fun processElement(
+        element: IrElement?, mappedNames: MutableMap<String, IrExpression>
+    ): IrElement? {
+        if (element is IrExpression) {
+            return processExpression(element, mappedNames)
+        }
+
+        return element
     }
 
     private fun generateLocalName(

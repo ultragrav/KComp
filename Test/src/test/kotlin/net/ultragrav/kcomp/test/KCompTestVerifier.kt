@@ -75,4 +75,16 @@ class KCompTestVerifier {
 
         assert(expected.contentEquals(actual)) { "Expected ${expected.contentToString()}, got ${actual.contentToString()}" }
     }
+
+    @Test
+    fun testWithSpread() {
+        val expected = arrayOf(
+            KComp.miniMessage.deserialize("some string"),
+            KComp.miniMessage.deserialize("test <comp> test", Placeholder.component("comp", KCompTest.testComponent)),
+            KComp.miniMessage.deserialize("test <comp> test", Placeholder.component("comp", KCompTest.testComponent2))
+        )
+        val actual = KCompTest.withSpread()
+
+        assert(expected.contentEquals(actual)) { "Expected ${expected.contentToString()}, got ${actual.contentToString()}" }
+    }
 }

@@ -10,7 +10,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/KComp" />
-            <option value="$PROJECT_DIR$/Plugin" />
             <option value="$PROJECT_DIR$/Processor" />
             <option value="$PROJECT_DIR$/Test" />
           </set>
