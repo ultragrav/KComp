@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.8.20"
+    kotlin("jvm") version "2.0.20"
     `maven-publish`
 }
 
@@ -8,4 +8,4 @@ repositories {
 }
 
 group = "net.ultragrav.kcomp"
-version = "1.0.3"
+version = "1.1.0"

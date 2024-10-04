@@ -23,19 +23,16 @@ import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.typeWithArguments
-import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
-import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.hasAnnotation
-import org.jetbrains.kotlin.ir.util.isVararg
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.types.Variance
 
 class KCompTransformer(private val context: IrPluginContext) :
     IrElementTransformerVoid() {
-    private val componentClass = context.referenceClass(ClassId.fromString(Component::class.qualifiedName!!))!!
-    private val placeholderClass = context.referenceClass(ClassId.fromString(Placeholder::class.qualifiedName!!))!!
-    private val tagResolverClass = context.referenceClass(ClassId.fromString(TagResolver::class.qualifiedName!!))!!
+    private val componentClass = context.referenceClass(ClassId.fromString(Component::class.qualifiedName!!.replace(".", "/")))!!
+    private val placeholderClass = context.referenceClass(ClassId.fromString(Placeholder::class.qualifiedName!!.replace(".", "/")))!!
+    private val tagResolverClass = context.referenceClass(ClassId.fromString(TagResolver::class.qualifiedName!!.replace(".", "/")))!!
     private val tagResolverType = tagResolverClass.defaultType
     private val tagResolverArrayType = context.irBuiltIns.arrayClass.typeWithArguments(
         listOf(
@@ -45,7 +42,7 @@ class KCompTransformer(private val context: IrPluginContext) :
     private val placeholderComponentFunction = placeholderClass.functionByName("component")
 
     private val placeholderInsertingAnnotation =
-        context.referenceClass(ClassId.fromString(ComponentPlaceholderInserting::class.qualifiedName!!))!!
+        context.referenceClass(ClassId.fromString(ComponentPlaceholderInserting::class.qualifiedName!!.replace(".", "/")))!!
 
     private val setConstructionFunctions = listOf(
         "listOf", "setOf", "mutableListOf", "mutableSetOf", "arrayListOf",
