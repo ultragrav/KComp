@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.utils.valueArguments
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
+import org.jetbrains.kotlin.ir.declarations.IrExternalPackageFragment
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.*
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.interpreter.toIrConst
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
@@ -50,6 +52,7 @@ class KCompTransformer(private val context: IrPluginContext) :
         "linkedMapOf", "sortedMapOf", "mutableMapOf"
     )
 
+    @OptIn(UnsafeDuringIrConstructionAPI::class)
     override fun visitCall(expression: IrCall): IrExpression {
         super.visitCall(expression)
 
@@ -144,9 +147,13 @@ class KCompTransformer(private val context: IrPluginContext) :
             } else if (!expression.symbol.owner.name.isSpecial && (expression.symbol.owner.name.identifier == "trimIndent" || expression.symbol.owner.name.identifier == "replaceIndent") && expression.extensionReceiver?.type == context.irBuiltIns.stringType) {
                 expression.extensionReceiver = processExpression(expression.extensionReceiver, mappedNames)
             } else if (!expression.symbol.owner.name.isSpecial && expression.symbol.owner.name.identifier in setConstructionFunctions) {
-                val listElements = expression.valueArguments[0] as? IrVararg ?: return expression
-                listElements.elements.replaceAll {
-                    processExpression(it as IrExpression, mappedNames)!!
+                val listElements = expression.valueArguments[0]
+                if (listElements is IrVararg) {
+                    listElements.elements.replaceAll {
+                        processExpression(it as IrExpression, mappedNames)!!
+                    }
+                } else if (listElements is IrExpression) {
+                    processExpression(listElements, mappedNames)
                 }
             }
         } else if (expression is IrGetValueImpl) {
@@ -189,6 +196,7 @@ class KCompTransformer(private val context: IrPluginContext) :
         return when (parent) {
             is IrClass -> parent.functions.toList()
             is IrFile -> parent.declarations.filterIsInstance<IrFunction>()
+            is IrExternalPackageFragment -> parent.declarations.filterIsInstance<IrFunction>()
             else -> throw IllegalStateException("Unrecognized parent: $parent")
         }
     }

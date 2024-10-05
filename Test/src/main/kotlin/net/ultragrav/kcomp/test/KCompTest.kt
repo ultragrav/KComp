@@ -30,6 +30,10 @@ object KCompTest {
         ).toComp()
     }
 
+    fun singleElementList(): List<Component> {
+        return listOf("test1 $testComponent test2").toComp()
+    }
+
     fun annotated(): Pair<Component, Component> {
         return testComp("test $testComponent test", "test $testComponent2 test")
     }

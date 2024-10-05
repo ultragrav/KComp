@@ -55,6 +55,15 @@ class KCompTestVerifier {
     }
 
     @Test
+    fun testSingleElementList() {
+        val testComponent = KCompTest.testComponent
+        val expected = listOf(KComp.miniMessage.deserialize("test1 <comp> test2", Placeholder.component("comp", testComponent)))
+        val actual = KCompTest.singleElementList()
+
+        assert(expected == actual) { "Expected $expected, got $actual" }
+    }
+
+    @Test
     fun testAnnotated() {
         val expected = Pair(
             KComp.miniMessage.deserialize("test <comp> test", Placeholder.component("comp", KCompTest.testComponent)),
