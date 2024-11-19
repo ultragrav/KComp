@@ -8,4 +8,4 @@ repositories {
 }
 
 group = "net.ultragrav.kcomp"
-version = "1.1.1"
+version = "1.1.2"

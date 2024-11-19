@@ -156,7 +156,7 @@ class KCompTransformer(private val context: IrPluginContext) :
                     processExpression(listElements, mappedNames)
                 }
             }
-        } else if (expression is IrGetValueImpl) {
+        } else if (expression is IrGetValue) {
             if (expression.type.isSubtypeOfClass(componentClass)) {
                 val name = generateLocalName(mappedNames, expression)
                 return "<$name>".toIrConst(context.irBuiltIns.stringType)
